@@ -3,177 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adjustable IG Feed</title>
+    <title>Adjustable IG Feed Pro</title>
     <style>
-        :root {
-            --bg-gray: #E8E6E3;
-            --notion-text: #37352f;
-        }
+        :root { --bg-gray: #E8E6E3; --notion-text: #37352f; --done-pink: #EDDDEB; }
+        body { font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: transparent; user-select: none; }
+        
+        /* Buttons */
+        #post-btn { background-color: var(--bg-gray); border: none; padding: 12px 35px; border-radius: 50px; cursor: pointer; font-size: 1.1rem; color: var(--notion-text); font-weight: 500; }
+        .num-btn { background: white; border: 2px solid #ddd; font-weight: bold; padding: 12px; cursor: pointer; border-radius: 10px; }
+        .number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background: transparent;
-            user-select: none; /* Prevents text highlighting while dragging */
-        }
-
-        #post-btn {
-            background-color: var(--bg-gray);
-            border: none;
-            padding: 12px 35px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            color: var(--notion-text);
-            font-weight: 500;
-        }
-
-        .number-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-        }
-
-        .num-btn {
-            background: white;
-            border: 2px solid #ddd;
-            font-weight: bold;
-            padding: 12px;
-            cursor: pointer;
-            border-radius: 10px;
-            font-size: 1.1rem;
-        }
-
-        .feed-frame {
-            position: relative;
-            width: 90vw;
-            max-width: 400px;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: aspect-ratio 0.3s ease;
-            touch-action: none; /* Critical for mobile dragging */
-        }
-
+        /* Feed Frame */
+        .feed-frame { position: relative; width: 90vw; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: aspect-ratio 0.3s ease; touch-action: none; }
         .ratio-square { aspect-ratio: 1 / 1; }
         .ratio-landscape { aspect-ratio: 16 / 9; }
         .ratio-portrait { aspect-ratio: 4 / 5; }
 
-        .slide {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none;
-            cursor: move; /* Shows the "drag" icon */
-            position: relative;
-        }
-
+        /* Image */
+        .slide { width: 100%; height: 100%; object-fit: cover; display: none; position: relative; pointer-events: none; }
         .slide.active { display: block; }
+        .editing .slide.active { cursor: move; pointer-events: auto; }
 
-        .overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 5;
-            pointer-events: none; /* Lets clicks go through to the photo */
-        }
+        /* UI Overlays */
+        .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 5; }
+        .upload-trigger { background: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        /* Nav Arrows */
+        .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.8); border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; display: flex; align-items: center; justify-content: center; }
+        .prev { left: 10px; } .next { right: 10px; }
 
-        .upload-trigger {
-            background: white;
-            color: black;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            pointer-events: auto;
-        }
+        /* Edit Controls */
+        #edit-ui { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 20; align-items: center; width: 90%; justify-content: center; }
+        .zoom-btn { background: white; border: none; width: 30px; height: 30px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .done-btn { background: var(--done-pink); border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; color: #555; }
 
-        #link-box {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            display: none;
-            z-index: 100;
-            width: 80%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        #link-box input {
-            width: 100%;
-            padding: 12px;
-            margin-top: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
-
-        .nav-arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255,255,255,0.8);
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-weight: bold;
-            z-index: 10;
-        }
-        .prev { left: 10px; }
-        .next { right: 10px; }
-
-        .menu-dots {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            color: white;
-            cursor: pointer;
-            opacity: 0;
-            font-size: 24px;
-            z-index: 15;
-            text-shadow: 0 0 5px rgba(0,0,0,0.5);
-        }
+        /* Menus */
+        .menu-dots { position: absolute; top: 15px; right: 15px; color: white; cursor: pointer; opacity: 0; font-size: 24px; z-index: 15; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
         .feed-frame:hover .menu-dots { opacity: 1; }
+        .format-menu { position: absolute; top: 45px; right: 15px; background: white; border-radius: 10px; padding: 5px; display: none; flex-direction: column; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .format-menu button { border: none; background: none; padding: 10px 15px; text-align: left; cursor: pointer; white-space: nowrap; }
 
-        .format-menu {
-            position: absolute;
-            bottom: 50px;
-            right: 15px;
-            background: white;
-            border-radius: 10px;
-            padding: 5px;
-            display: none;
-            flex-direction: column;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 20;
-        }
-        .format-menu button {
-            border: none;
-            background: none;
-            padding: 10px 15px;
-            text-align: left;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        .format-menu button:hover { background: #f5f5f5; }
-
+        #link-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 15px; display: none; z-index: 100; width: 80%; }
+        #link-box input { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -182,47 +53,47 @@
     <button id="post-btn">₊˚⊹ 𝒑𝒐𝒔𝒕 𝒕𝒐 𝒚𝒐𝒖𝒓 𝒇𝒆𝒆𝒅 ʚɞ♡︎ ˚</button>
 
     <div id="step-2" class="hidden">
-        <p style="font-weight:bold; text-align:center;">How many slides?</p>
         <div class="number-grid" id="grid"></div>
     </div>
 
     <div id="feed-container" class="feed-frame ratio-square hidden">
         <div id="slides-wrapper" style="width:100%; height:100%;"></div>
         
-        <div id="upload-overlay" class="overlay">
+        <div id="upload-overlay" class="overlay hidden">
             <button class="upload-trigger" onclick="openInput()">𝒖𝒑𝒍𝒐𝒂𝒅 𝒊𝒎𝒂𝒈𝒆 𝒍𝒊𝒏𝒌 ૮꒰ •͈ ·̭ •͈ ꒱ა</button>
         </div>
 
-        <button class="nav-arrow prev" onclick="changeSlide(-1)">❮</button>
-        <button class="nav-arrow next" onclick="changeSlide(1)">❯</button>
+        <button id="prev-arr" class="nav-arrow prev" onclick="changeSlide(-1)">❮</button>
+        <button id="next-arr" class="nav-arrow next" onclick="changeSlide(1)">❯</button>
+
+        <div id="edit-ui" class="hidden">
+            <button class="zoom-btn" onclick="adjustZoom(0.1)">+</button>
+            <button class="zoom-btn" onclick="adjustZoom(-0.1)">-</button>
+            <button class="done-btn" onclick="exitEditMode()">𝒅𝒐𝒏𝒆!</button>
+        </div>
 
         <div class="menu-dots" onclick="toggleFormatMenu()">⋮</div>
         <div id="format-menu" class="format-menu">
             <button onclick="setRatio('square')">4 x 4 Square</button>
             <button onclick="setRatio('landscape')">Landscape</button>
             <button onclick="setRatio('portrait')">IG Screen Length</button>
+            <hr style="width:100%; border:0; border-top:1px solid #eee;">
+            <button onclick="enterEditMode()" style="font-weight:bold;">✨ Move & Zoom</button>
         </div>
     </div>
 
     <div id="link-box">
-        <p style="margin:0; font-weight:bold">Paste Link & Press Enter</p>
-        <input type="text" id="url-input" placeholder="https://...">
+        <p style="margin:0; font-weight:bold">Paste & Enter</p>
+        <input type="text" id="url-input">
     </div>
 
     <script>
-        let images = [];
-        let currentIndex = 0;
-        let isDragging = false;
-        let startY, startX, scrollTop, scrollLeft;
-        
+        let images = []; let currentIndex = 0; let isDragging = false; let startX, startY;
         const placeholder = "https://i.pinimg.com/736x/a3/77/6d/a3776de68e632eef38e28d8a33d17e70.jpg";
 
         window.onload = () => {
-            const saved = JSON.parse(localStorage.getItem('igFeedMemoryV2'));
-            if(saved) {
-                images = saved;
-                showFeed();
-            }
+            const saved = JSON.parse(localStorage.getItem('igFeedV4'));
+            if(saved) { images = saved; showFeed(); }
         };
 
         document.getElementById('post-btn').onclick = () => {
@@ -232,20 +103,13 @@
 
         const grid = document.getElementById('grid');
         for(let i=1; i<=10; i++) {
-            let b = document.createElement('button');
-            b.innerText = i;
-            b.className = 'num-btn';
-            b.onclick = () => {
-                images = new Array(i).fill({url: placeholder, x: 50, y: 50});
-                save();
-                showFeed();
-            };
+            let b = document.createElement('button'); b.innerText = i; b.className = 'num-btn';
+            b.onclick = () => { images = new Array(i).fill(null).map(() => ({url: placeholder, x: 50, y: 50, z: 100})); save(); showFeed(); };
             grid.appendChild(b);
         }
 
         function showFeed() {
             document.getElementById('step-2').classList.add('hidden');
-            document.getElementById('post-btn').classList.add('hidden');
             document.getElementById('feed-container').classList.remove('hidden');
             render();
         }
@@ -257,84 +121,66 @@
                 let img = document.createElement('img');
                 img.src = imgObj.url;
                 img.className = `slide ${idx === currentIndex ? 'active' : ''}`;
-                // Set the position of the image within the frame
                 img.style.objectPosition = `${imgObj.x}% ${imgObj.y}%`;
-                
-                // Drag Logic
-                img.onmousedown = dragStart;
-                img.ontouchstart = dragStart;
-                
+                img.style.transform = `scale(${imgObj.z / 100})`;
+                img.onmousedown = dragStart; img.ontouchstart = dragStart;
                 wrapper.appendChild(img);
             });
-            document.getElementById('upload-overlay').style.display = (images[currentIndex].url === placeholder) ? 'flex' : 'none';
+            document.getElementById('upload-overlay').classList.toggle('hidden', images[currentIndex].url !== placeholder);
+        }
+
+        function enterEditMode() {
+            document.getElementById('feed-container').classList.add('editing');
+            document.getElementById('prev-arr').classList.add('hidden');
+            document.getElementById('next-arr').classList.add('hidden');
+            document.getElementById('edit-ui').classList.remove('hidden');
+            document.getElementById('format-menu').style.display = 'none';
+        }
+
+        function exitEditMode() {
+            document.getElementById('feed-container').classList.remove('editing');
+            document.getElementById('prev-arr').classList.remove('hidden');
+            document.getElementById('next-arr').classList.remove('hidden');
+            document.getElementById('edit-ui').classList.add('hidden');
+            save();
+        }
+
+        function adjustZoom(val) {
+            images[currentIndex].z = Math.max(100, Math.min(300, images[currentIndex].z + (val * 100)));
+            render();
         }
 
         function dragStart(e) {
+            if(!document.getElementById('feed-container').classList.contains('editing')) return;
             isDragging = true;
-            startX = e.pageX || e.touches[0].pageX;
-            startY = e.pageY || e.touches[0].pageY;
-            
-            window.onmousemove = dragMove;
-            window.ontouchmove = dragMove;
-            window.onmouseup = dragEnd;
-            window.ontouchend = dragEnd;
+            startX = e.pageX || e.touches[0].pageX; startY = e.pageY || e.touches[0].pageY;
+            window.onmousemove = dragMove; window.ontouchmove = dragMove;
+            window.onmouseup = dragEnd; window.ontouchend = dragEnd;
         }
 
         function dragMove(e) {
             if (!isDragging) return;
-            const x = e.pageX || e.touches[0].pageX;
-            const y = e.pageY || e.touches[0].pageY;
-            
-            const diffX = (startX - x) / 5; // Sensitivity
-            const diffY = (startY - y) / 5;
-
-            images[currentIndex].x = Math.max(0, Math.min(100, images[currentIndex].x + diffX));
-            images[currentIndex].y = Math.max(0, Math.min(100, images[currentIndex].y + diffY));
-
-            startX = x;
-            startY = y;
-            render();
+            const x = e.pageX || e.touches[0].pageX; const y = e.pageY || e.touches[0].pageY;
+            images[currentIndex].x = Math.max(0, Math.min(100, images[currentIndex].x + (startX - x) / 5));
+            images[currentIndex].y = Math.max(0, Math.min(100, images[currentIndex].y + (startY - y) / 5));
+            startX = x; startY = y; render();
         }
 
-        function dragEnd() {
-            isDragging = false;
-            save();
-            window.onmousemove = null;
-            window.ontouchmove = null;
-        }
+        function dragEnd() { isDragging = false; window.onmousemove = null; window.ontouchmove = null; }
 
-        function changeSlide(n) {
-            currentIndex = (currentIndex + n + images.length) % images.length;
-            render();
-        }
-
-        function openInput() {
-            document.getElementById('link-box').style.display = 'block';
-            document.getElementById('url-input').focus();
-        }
-
-        document.getElementById('url-input').addEventListener('keypress', (e) => {
+        function changeSlide(n) { currentIndex = (currentIndex + n + images.length) % images.length; render(); }
+        function openInput() { document.getElementById('link-box').style.display = 'block'; document.getElementById('url-input').focus(); }
+        
+        document.getElementById('url-input').onkeypress = (e) => {
             if(e.key === 'Enter') {
-                images[currentIndex].url = e.target.value;
-                e.target.value = '';
-                document.getElementById('link-box').style.display = 'none';
-                save();
-                render();
+                images[currentIndex].url = e.target.value; e.target.value = '';
+                document.getElementById('link-box').style.display = 'none'; save(); render();
             }
-        });
+        };
 
-        function save() { localStorage.setItem('igFeedMemoryV2', JSON.stringify(images)); }
-
-        function toggleFormatMenu() {
-            const m = document.getElementById('format-menu');
-            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
-        }
-
-        function setRatio(type) {
-            const frame = document.getElementById('feed-container');
-            frame.className = `feed-frame ratio-${type}`;
-            document.getElementById('format-menu').style.display = 'none';
-        }
+        function save() { localStorage.setItem('igFeedV4', JSON.stringify(images)); }
+        function toggleFormatMenu() { const m = document.getElementById('format-menu'); m.style.display = (m.style.display === 'flex') ? 'none' : 'flex'; }
+        function setRatio(type) { document.getElementById('feed-container').className = `feed-frame ratio-${type}`; document.getElementById('format-menu').style.display = 'none'; }
     </script>
 </body>
 </html>
